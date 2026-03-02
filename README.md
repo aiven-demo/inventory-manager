@@ -1,4 +1,4 @@
-# Recipe App
+# Recipe App Compose Demo
 
 A simple recipe application with a Node.js backend, React frontend, and PostgreSQL database.
 
@@ -11,146 +11,137 @@ A simple recipe application with a Node.js backend, React frontend, and PostgreS
 - 🐳 Docker/Podman support
 - ⚡ Fast builds with minimal dependencies
 
-## Tech Stack
+## Tech stack
 
 - **Backend**: Node.js, Express, TypeScript, PostgreSQL
 - **Frontend**: React, TypeScript, Vite, Tailwind CSS
 - **Database**: PostgreSQL
 - **Container**: Docker/Podman
 
-## Quick Start
+## Quick start
+
+The easiest way to run the application is with Docker Compose or Podman Compose. This starts the backend, frontend, and a PostgreSQL database in one command.
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL database
-- Docker or Podman (optional)
+- Docker or Podman with Compose
 
-### Development Setup
+### Running
 
 1. **Clone the repository**
 
    ```bash
    git clone <repository-url>
-   cd recipe-ai-app
+   cd recipe-app-compose-demo
+   ```
+
+2. **Start all services**
+
+   Using Docker Compose:
+
+   ```bash
+   docker compose -f apps/docker-compose.yml up --build -d
+   ```
+
+   Using Podman Compose:
+
+   ```bash
+   podman-compose -f apps/docker-compose.yml up --build -d
+   ```
+
+   This starts:
+
+   - **PostgreSQL** database on port 5432
+   - **Web app** (backend + frontend) on http://localhost:3000
+
+   The database is automatically seeded with sample recipes on first launch.
+
+3. **View logs**
+
+   ```bash
+   docker compose -f apps/docker-compose.yml logs -f
+   ```
+
+   Or with Podman:
+
+   ```bash
+   podman-compose -f apps/docker-compose.yml logs -f
+   ```
+
+4. **Stop all services**
+
+   ```bash
+   docker compose -f apps/docker-compose.yml down
+   ```
+
+   To also remove the database volume (resets all data):
+
+   ```bash
+   docker compose -f apps/docker-compose.yml down -v
+   ```
+
+## Development
+
+All application code lives under `apps/web/`, which is an npm workspace with `backend` and `frontend` packages.
+
+1. **Start the database**
+
+   ```bash
+   docker compose -f apps/docker-compose.yml up db -d
    ```
 
 2. **Install dependencies**
 
    ```bash
-   npm ci
+   cd apps/web
+   npm install
    ```
 
 3. **Start the development servers**
 
    ```bash
-   DATABASE_URL=<some Postgres URL here, don't require SSL in dev> npm run dev
+   DATABASE_URL=postgresql://recipe_user:recipe_pass@localhost:5432/recipe_db npm run dev
    ```
 
-   This will start:
+   This starts:
 
-   - Frontend development server on http://localhost:3000
    - Backend server on http://localhost:3001
+   - Frontend dev server (Vite) on http://localhost:5173
 
-### Docker Setup
+   You can also run them individually with `npm run dev:backend` or `npm run dev:frontend`.
 
-1. **Build the Docker image**
+4. **Lint the frontend**
 
    ```bash
-   podman build -t recipe-ai-app .
+   cd frontend
+   npm run lint
    ```
 
-2. **Run the container**
-   ```bash
-   podman run -d \
-     --name recipe-app \
-     -p 3001:3001 \
-     -e DATABASE_URL="postgresql://username:password@host:5432/recipe_db" \
-     recipe-ai-app
-   ```
+### Database seeding
 
-## API Endpoints
+The database is automatically seeded with sample recipes on first launch. To re-seed manually:
+
+```bash
+cd apps/web/backend
+npm run db:seed
+```
+
+## API endpoints
 
 - `GET /health` - Health check
 - `GET /api/recipes` - Get all recipes (supports search query parameter)
 - `GET /api/recipes/:id` - Get recipe by ID
 
-## Database Schema
+## Environment variables
 
-The application uses a single `recipes` table with the following structure:
+These are configured automatically when using Docker/Podman Compose. Only set them manually for local development.
 
-```sql
-CREATE TABLE recipes (
-  id SERIAL PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
-  description TEXT,
-  ingredients TEXT[] NOT NULL,
-  instructions TEXT[] NOT NULL,
-  cooking_time INTEGER NOT NULL,
-  difficulty VARCHAR(50) NOT NULL,
-  servings INTEGER DEFAULT 4,
-  image_url VARCHAR(500),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start both frontend and backend in development mode
-- `npm run dev:backend` - Start only the backend server
-- `npm run dev:frontend` - Start only the frontend development server
-- `npm run build` - Build both frontend and backend for production
-- `npm start` - Start the production backend server
-
-### Database Seeding
-
-The application includes sample recipe data that is automatically seeded when the application starts. You can manually run the seeding script:
-
-```bash
-cd backend
-npm run db:seed
-```
-
-## Project Structure
-
-```
-recipe-ai-app/
-├── backend/                 # Node.js backend
-│   ├── src/
-│   │   ├── index.ts        # Main server file
-│   │   ├── routes/         # API routes
-│   │   └── db/             # Database utilities
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── types/          # TypeScript types
-│   │   ├── App.tsx         # Main app component
-│   │   └── main.tsx        # Entry point
-│   ├── package.json
-│   └── vite.config.ts
-├── Dockerfile              # Multi-stage Docker build
-├── docker-entrypoint.sh    # Docker startup script
-└── package.json            # Root package.json (workspaces)
-```
-
-## Environment Variables
-
-- `DATABASE_URL` - PostgreSQL connection string (required)
-- `FRONTEND_DEV_PORT` - Frontend port (default: 5000)
-- `SERVER_PORT` - Server port (default: 3000)
-- `NODE_ENV` - Environment mode (development/production)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+| Variable | Description | Default (Compose) |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL connection string (required) | `postgresql://recipe_user:recipe_pass@db:5432/recipe_db` |
+| `SERVER_PORT` | Backend server port | `3000` |
+| `FRONTEND_DEV_PORT` | Frontend dev server port | `5000` |
+| `NODE_ENV` | Environment mode | `production` |
 
 ## License
 
