@@ -1,6 +1,6 @@
 # Bestest Recipes
 
-A recipe application with a Node.js web backend, React frontend, PostgreSQL database, Redis cache/queue, and a Go-based nutrition analyzer service.
+A multi-service demo application with a Node.js web backend, a React frontend, a PostgreSQL database, a Redis cache, a Redis queue, and a Go-based background job service.
 
 ## Architecture
 
