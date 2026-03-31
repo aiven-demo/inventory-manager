@@ -8,11 +8,11 @@ const path = require("path");
 const app = express();
 const port = process.env.SERVER_PORT || 3000;
 
+const dbUrl = process.env.DATABASE_URL || "";
+const useSSL = dbUrl.includes("sslmode=require");
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("sslmode=require")
-    ? { rejectUnauthorized: false }
-    : undefined,
+  connectionString: dbUrl.replace(/[\?&]sslmode=require/, ""),
+  ssl: useSSL ? { rejectUnauthorized: false } : undefined,
 });
 
 const cacheRedis = process.env.CACHE_REDIS_URL

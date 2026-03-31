@@ -1,10 +1,10 @@
 const { Pool } = require("pg");
 
+const dbUrl = process.env.DATABASE_URL || "";
+const useSSL = dbUrl.includes("sslmode=require");
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("sslmode=require")
-    ? { rejectUnauthorized: false }
-    : undefined,
+  connectionString: dbUrl.replace(/[\?&]sslmode=require/, ""),
+  ssl: useSSL ? { rejectUnauthorized: false } : undefined,
 });
 
 const createTables = async () => {
