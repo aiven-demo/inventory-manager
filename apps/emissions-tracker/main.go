@@ -19,8 +19,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	redisURL := getEnv("QUEUE_REDIS_URL", "redis://mgr-queue:6379")
 	dbURL := os.Getenv("DATABASE_URL")
+	redisURL := getEnv("REDIS_URL", "redis://localhost:6379")
 	port := getEnv("PORT", "8080")
 
 	dbPool, err := pgxpool.New(ctx, dbURL)
@@ -34,6 +34,22 @@ func main() {
 	}
 	log.Println("Connected to database")
 
+	var rdb *redis.Client
+	redisOpts, err := redis.ParseURL(redisURL)
+	if err == nil {
+		rdb = redis.NewClient(redisOpts)
+		if err := rdb.Ping(ctx).Err(); err != nil {
+			log.Printf("Redis not available, running without queue: %v", err)
+			rdb.Close()
+			rdb = nil
+		} else {
+			log.Println("Connected to Redis")
+			defer rdb.Close()
+		}
+	} else {
+		log.Printf("Invalid REDIS_URL, running without queue: %v", err)
+	}
+
 	if err := waitForItemsTable(ctx, dbPool); err != nil {
 		log.Fatalf("Failed waiting for items table: %v", err)
 	}
@@ -44,18 +60,11 @@ func main() {
 	}
 	log.Println("Database schema ready")
 
-	opts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		log.Fatalf("Failed to parse Redis URL: %v", err)
+	if rdb != nil {
+		go workerLoop(ctx, rdb, dbPool)
+	} else {
+		log.Println("Worker loop disabled (no Redis connection)")
 	}
-	rdb := redis.NewClient(opts)
-
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
-	}
-	log.Println("Connected to Redis")
-
-	go workerLoop(ctx, rdb, dbPool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handleHealth(dbPool, rdb))
@@ -78,7 +87,6 @@ func main() {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 	server.Shutdown(shutdownCtx)
-	rdb.Close()
 	log.Println("Shutdown complete")
 }
 
@@ -132,10 +140,10 @@ func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
 func handleHealth(db *pgxpool.Pool, rdb *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		dbOK := db.Ping(r.Context()) == nil
-		redisOK := rdb.Ping(r.Context()).Err() == nil
+		redisOK := rdb != nil && rdb.Ping(r.Context()).Err() == nil
 
 		status := "ok"
-		if !dbOK || !redisOK {
+		if !dbOK {
 			status = "degraded"
 		}
 

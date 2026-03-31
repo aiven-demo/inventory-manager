@@ -16,19 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-  mgr-queue:
-    image: redis:7-alpine
-    restart: unless-stopped
-    ports:
-      - "6380:6379"
-    volumes:
-      - queuedata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   mgr-web-cache:
     image: redis:7-alpine
     restart: unless-stopped
@@ -52,7 +39,6 @@ services:
     environment:
       DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/mgr_db
       CACHE_REDIS_URL: redis://mgr-web-cache:6379
-      QUEUE_REDIS_URL: redis://mgr-queue:6379
       SERVER_PORT: "3000"
       NODE_ENV: production
     depends_on:
@@ -60,25 +46,19 @@ services:
         condition: service_healthy
       mgr-web-cache:
         condition: service_healthy
-      mgr-queue:
-        condition: service_healthy
 
-  mgr-emissions-tracker:
+  mgr-emissions-bot:
     build:
       context: ./emissions-tracker
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/mgr_db
-      QUEUE_REDIS_URL: redis://mgr-queue:6379
       PORT: "8080"
     depends_on:
       mgr-db:
         condition: service_healthy
-      mgr-queue:
-        condition: service_healthy
 
 volumes:
   pgdata:
-  queuedata:
   web-cachedata:
