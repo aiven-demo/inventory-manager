@@ -126,13 +126,13 @@ const RecipeList = () => {
   const getDifficultyColor = useCallback((difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case "easy":
-        return "bg-green-100 text-green-800 border border-green-200";
+        return "bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700";
       case "medium":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-200";
+        return "bg-yellow-100 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700";
       case "hard":
-        return "bg-red-100 text-red-800 border border-red-200";
+        return "bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700";
       default:
-        return "bg-gray-100 text-gray-800 border border-gray-200";
+        return "bg-gray-100 text-gray-800 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600";
     }
   }, []);
 
@@ -141,7 +141,7 @@ const RecipeList = () => {
     return recipes.map((recipe) => (
       <div
         key={recipe.id}
-        className="bg-white/90 backdrop-blur-sm rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group border border-gray-200/50"
+        className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 group border border-gray-200/50 dark:border-gray-700/50"
       >
         <div className="relative overflow-hidden">
           <img
@@ -156,11 +156,13 @@ const RecipeList = () => {
         </div>
         <div className="p-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-bold text-gray-900">{recipe.title}</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              {recipe.title}
+            </h2>
             <button
               onClick={(e) => toggleLike(recipe, e)}
               disabled={likeInProgress[recipe.id]}
-              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 transition-colors duration-200"
+              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
               aria-label={recipe.liked_at ? "Unlike recipe" : "Like recipe"}
             >
               {likeInProgress[recipe.id] ? (
@@ -174,12 +176,12 @@ const RecipeList = () => {
               )}
             </button>
           </div>
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
             {recipe.description}
           </p>
 
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm text-gray-500 flex items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
               <span className="mr-1">⏱️</span> {recipe.cooking_time} min
             </span>
             <span
@@ -205,9 +207,11 @@ const RecipeList = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="text-gray-600 mt-4 text-center">Loading recipes...</p>
+          <p className="text-gray-600 dark:text-gray-300 mt-4 text-center">
+            Loading recipes...
+          </p>
         </div>
       </div>
     );
@@ -216,8 +220,8 @@ const RecipeList = () => {
   if (error) {
     return (
       <div className="text-center py-8">
-        <div className="bg-white rounded-xl p-8 max-w-md mx-auto border border-gray-200 shadow-sm">
-          <p className="text-red-600 mb-4">{error}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md mx-auto border border-gray-200 dark:border-gray-700 shadow-sm">
+          <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
           <button
             onClick={() => fetchRecipes(debouncedSearchTerm, false)}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 font-semibold"
@@ -232,7 +236,7 @@ const RecipeList = () => {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6 text-center">
           Discover Amazing Recipes
         </h1>
         <div className="max-w-md mx-auto relative">
@@ -241,7 +245,7 @@ const RecipeList = () => {
             placeholder="Search recipes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-6 py-4 bg-white/90 backdrop-blur-sm border border-gray-300/50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 text-gray-900 placeholder-gray-500 text-lg shadow-sm"
+            className="w-full px-6 py-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-300/50 dark:border-gray-600/50 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-lg shadow-sm"
           />
           {searching && (
             <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
@@ -253,8 +257,10 @@ const RecipeList = () => {
 
       {recipes.length === 0 ? (
         <div className="text-center py-12">
-          <div className="bg-white rounded-xl p-8 max-w-md mx-auto border border-gray-200 shadow-sm">
-            <p className="text-gray-600 text-lg">No recipes found.</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md mx-auto border border-gray-200 dark:border-gray-700 shadow-sm">
+            <p className="text-gray-600 dark:text-gray-300 text-lg">
+              No recipes found.
+            </p>
           </div>
         </div>
       ) : (

@@ -121,22 +121,24 @@ const RecipeDetail = () => {
   const getDifficultyColor = useCallback((difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case "easy":
-        return "bg-green-100 text-green-800 border border-green-200";
+        return "bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700";
       case "medium":
-        return "bg-yellow-100 text-yellow-800 border border-yellow-200";
+        return "bg-yellow-100 text-yellow-800 border border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700";
       case "hard":
-        return "bg-red-100 text-red-800 border border-red-200";
+        return "bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700";
       default:
-        return "bg-gray-100 text-gray-800 border border-gray-200";
+        return "bg-gray-100 text-gray-800 border border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600";
     }
   }, []);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="bg-white rounded-xl p-8 border border-gray-200 shadow-sm">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="text-gray-600 mt-4 text-center">Loading recipe...</p>
+          <p className="text-gray-600 dark:text-gray-300 mt-4 text-center">
+            Loading recipe...
+          </p>
         </div>
       </div>
     );
@@ -145,8 +147,10 @@ const RecipeDetail = () => {
   if (error || !recipe) {
     return (
       <div className="text-center py-8">
-        <div className="bg-white rounded-xl p-8 max-w-md mx-auto border border-gray-200 shadow-sm">
-          <p className="text-red-600 mb-4">{error || "Recipe not found"}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md mx-auto border border-gray-200 dark:border-gray-700 shadow-sm">
+          <p className="text-red-600 dark:text-red-400 mb-4">
+            {error || "Recipe not found"}
+          </p>
           <Link
             to="/"
             className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-300 font-semibold inline-block"
@@ -162,12 +166,12 @@ const RecipeDetail = () => {
     <div className="max-w-4xl mx-auto">
       <Link
         to="/"
-        className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-6 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm transition-all duration-300"
+        className="inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white mb-6 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300"
       >
         ← Back to Recipes
       </Link>
 
-      <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="relative">
           <img
             src={recipe.image_url}
@@ -182,12 +186,14 @@ const RecipeDetail = () => {
 
         <div className="p-8">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">{recipe.title}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {recipe.title}
+            </h1>
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleLike}
                 disabled={likeInProgress}
-                className="flex items-center justify-center w-10 h-10 ml-4 rounded-full hover:bg-gray-100 transition-colors duration-200"
+                className="flex items-center justify-center w-10 h-10 ml-4 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                 aria-label={recipe.liked_at ? "Unlike recipe" : "Like recipe"}
               >
                 {likeInProgress ? (
@@ -212,67 +218,85 @@ const RecipeDetail = () => {
             </div>
           </div>
 
-          <p className="text-gray-600 text-lg mb-6">{recipe.description}</p>
+          <p className="text-gray-600 dark:text-gray-300 text-lg mb-6">
+            {recipe.description}
+          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="text-center p-6 bg-gray-50 rounded-xl border border-gray-200">
+            <div className="text-center p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
               <div className="text-3xl font-bold text-blue-600 mb-2">⏱️</div>
-              <div className="text-sm text-gray-600">Cooking Time</div>
-              <div className="text-lg font-semibold text-gray-900">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Cooking Time
+              </div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-white">
                 {recipe.cooking_time} minutes
               </div>
             </div>
-            <div className="text-center p-6 bg-gray-50 rounded-xl border border-gray-200">
+            <div className="text-center p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
               <div className="text-3xl font-bold text-green-600 mb-2">👥</div>
-              <div className="text-sm text-gray-600">Servings</div>
-              <div className="text-lg font-semibold text-gray-900">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Servings
+              </div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-white">
                 {recipe.servings} people
               </div>
             </div>
-            <div className="text-center p-6 bg-gray-50 rounded-xl border border-gray-200">
+            <div className="text-center p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
               <div className="text-3xl font-bold text-purple-600 mb-2">📅</div>
-              <div className="text-sm text-gray-600">Added</div>
-              <div className="text-lg font-semibold text-gray-900">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Added
+              </div>
+              <div className="text-lg font-semibold text-gray-900 dark:text-white">
                 {new Date(recipe.created_at).toLocaleDateString()}
               </div>
             </div>
           </div>
 
           {nutrition ? (
-            <div className="mb-8 p-6 bg-emerald-50 rounded-xl border border-emerald-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
+            <div className="mb-8 p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
                 Nutrition per Serving
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="text-center p-3 bg-white rounded-lg border border-emerald-100">
-                  <div className="text-2xl font-bold text-emerald-600">
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                  <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                     {nutrition.calories}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">kcal</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    kcal
+                  </div>
                 </div>
-                <div className="text-center p-3 bg-white rounded-lg border border-emerald-100">
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {nutrition.protein_g}g
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">Protein</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Protein
+                  </div>
                 </div>
-                <div className="text-center p-3 bg-white rounded-lg border border-emerald-100">
-                  <div className="text-2xl font-bold text-amber-600">
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                     {nutrition.carbs_g}g
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">Carbs</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Carbs
+                  </div>
                 </div>
-                <div className="text-center p-3 bg-white rounded-lg border border-emerald-100">
-                  <div className="text-2xl font-bold text-orange-600">
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                  <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                     {nutrition.fat_g}g
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">Fat</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Fat
+                  </div>
                 </div>
-                <div className="text-center p-3 bg-white rounded-lg border border-emerald-100">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {nutrition.fiber_g}g
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">Fiber</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Fiber
+                  </div>
                 </div>
               </div>
               <p className="text-xs text-gray-400 mt-3 text-right">
@@ -280,13 +304,13 @@ const RecipeDetail = () => {
               </p>
             </div>
           ) : (
-            <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200 text-center">
+            <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600 text-center">
               <button
                 onClick={startAnalysis}
                 disabled={analyzing}
                 className={`px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
                   analyzing
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    ? "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                     : "bg-emerald-600 text-white hover:bg-emerald-700"
                 }`}
               >
@@ -299,29 +323,33 @@ const RecipeDetail = () => {
                   "🔬 Analyze Nutrition"
                 )}
               </button>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 Estimate calories and macros from ingredients
               </p>
             </div>
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 Ingredients
               </h2>
               <ul className="space-y-3">
                 {recipe.ingredients.map((ingredient, index) => (
                   <li key={index} className="flex items-start">
-                    <span className="text-blue-600 mr-3 text-lg">•</span>
-                    <span className="text-gray-700">{ingredient}</span>
+                    <span className="text-blue-600 dark:text-blue-400 mr-3 text-lg">
+                      •
+                    </span>
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {ingredient}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 Instructions
               </h2>
               <ol className="space-y-4">
@@ -330,7 +358,9 @@ const RecipeDetail = () => {
                     <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
                       {index + 1}
                     </span>
-                    <span className="text-gray-700">{instruction}</span>
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {instruction}
+                    </span>
                   </li>
                 ))}
               </ol>

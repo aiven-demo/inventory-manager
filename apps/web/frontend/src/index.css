@@ -2,16 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom font stack */
 @layer base {
   html {
     font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir,
       segoe ui, helvetica neue, Adwaita Sans, Cantarell, Ubuntu, roboto, noto,
       helvetica, arial, sans-serif;
   }
+
+  html.dark {
+    color-scheme: dark;
+  }
 }
 
-/* Stripe-inspired subtle design */
 @layer components {
   .glass {
     @apply bg-white/8 backdrop-blur-sm border border-white/15 shadow-sm;
