@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import RecipeList from "./components/RecipeList";
-import RecipeDetail from "./components/RecipeDetail";
+import ItemList from "./components/ItemList";
+import ItemDetail from "./components/ItemDetail";
 import Header from "./components/Header";
 import { useDarkMode } from "./hooks/useDarkMode";
 
@@ -12,8 +12,8 @@ function App() {
       <Header isDark={isDark} onToggle={toggle} />
       <main className="container mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={<RecipeList />} />
-          <Route path="/recipe/:id" element={<RecipeDetail />} />
+          <Route path="/" element={<ItemList />} />
+          <Route path="/item/:id" element={<ItemDetail />} />
         </Routes>
       </main>
     </div>

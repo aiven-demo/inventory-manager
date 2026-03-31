@@ -1,7 +1,7 @@
 {
-  "name": "recipe-ai-app",
+  "name": "inventory-manager-web-app",
   "version": "1.0.0",
-  "description": "Recipe database application with Node.js backend and React frontend",
+  "description": "Inventory management application with Node.js backend and React frontend",
   "private": true,
   "workspaces": [
     "backend",

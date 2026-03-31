@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
 const Redis = require("ioredis");
-const { recipeRoutes } = require("./routes/recipes");
+const { itemRoutes } = require("./routes/items");
 const path = require("path");
 
 const app = express();
@@ -46,7 +46,7 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-app.use("/api/recipes", recipeRoutes(pool, cacheRedis, queueRedis));
+app.use("/api/items", itemRoutes(pool, cacheRedis, queueRedis));
 
 app.use(express.static(path.join(__dirname, "../../frontend/dist")));
 

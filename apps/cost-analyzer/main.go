@@ -19,7 +19,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	redisURL := getEnv("QUEUE_REDIS_URL", "redis://br-queue:6379")
+	redisURL := getEnv("QUEUE_REDIS_URL", "redis://mgr-queue:6379")
 	dbURL := os.Getenv("DATABASE_URL")
 	port := getEnv("PORT", "8080")
 
@@ -34,10 +34,10 @@ func main() {
 	}
 	log.Println("Connected to database")
 
-	if err := waitForRecipesTable(ctx, dbPool); err != nil {
-		log.Fatalf("Failed waiting for recipes table: %v", err)
+	if err := waitForItemsTable(ctx, dbPool); err != nil {
+		log.Fatalf("Failed waiting for items table: %v", err)
 	}
-	log.Println("recipes table found")
+	log.Println("Items table found")
 
 	if err := ensureSchema(ctx, dbPool); err != nil {
 		log.Fatalf("Failed to create schema: %v", err)
@@ -83,7 +83,7 @@ func main() {
 }
 
 func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
-	log.Println("Worker loop started, waiting for jobs on 'jobs:nutrition'")
+	log.Println("Worker loop started, waiting for jobs on 'jobs:cost-analysis'")
 	for {
 		select {
 		case <-ctx.Done():
@@ -92,7 +92,7 @@ func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
 		default:
 		}
 
-		result, err := rdb.BRPop(ctx, 5*time.Second, "jobs:nutrition").Result()
+		result, err := rdb.BRPop(ctx, 5*time.Second, "jobs:cost-analysis").Result()
 		if err != nil {
 			if err == redis.Nil || strings.Contains(err.Error(), "context canceled") {
 				continue
@@ -103,29 +103,29 @@ func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
 		}
 
 		payload := result[1]
-		var job NutritionJob
+		var job CostAnalysisJob
 		if err := json.Unmarshal([]byte(payload), &job); err != nil {
 			log.Printf("Failed to unmarshal job: %v", err)
 			continue
 		}
 
-		log.Printf("Processing nutrition analysis for recipe %d (attempt %d)", job.RecipeID, job.Attempt)
+		log.Printf("Processing cost analysis for item %d (attempt %d)", job.ItemID, job.Attempt)
 
-		if err := processNutritionJob(ctx, db, &job); err != nil {
-			log.Printf("Job failed for recipe %d: %v", job.RecipeID, err)
+		if err := processCostAnalysisJob(ctx, db, &job); err != nil {
+			log.Printf("Job failed for item %d: %v", job.ItemID, err)
 
 			if job.Attempt < 3 {
 				job.Attempt++
 				retryPayload, _ := json.Marshal(job)
-				rdb.LPush(ctx, "jobs:nutrition", retryPayload)
-				log.Printf("Requeued recipe %d (attempt %d)", job.RecipeID, job.Attempt)
+				rdb.LPush(ctx, "jobs:cost-analysis", retryPayload)
+				log.Printf("Requeued item %d (attempt %d)", job.ItemID, job.Attempt)
 			} else {
-				log.Printf("Job permanently failed for recipe %d after %d attempts", job.RecipeID, job.Attempt)
+				log.Printf("Job permanently failed for item %d after %d attempts", job.ItemID, job.Attempt)
 			}
 			continue
 		}
 
-		log.Printf("Nutrition analysis complete for recipe %d", job.RecipeID)
+		log.Printf("Cost analysis complete for item %d", job.ItemID)
 	}
 }
 

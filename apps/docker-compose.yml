@@ -1,22 +1,22 @@
 services:
-  br-db:
+  mgr-db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: recipe_user
-      POSTGRES_PASSWORD: recipe_pass
-      POSTGRES_DB: recipe_db
+      POSTGRES_USER: mgr_user
+      POSTGRES_PASSWORD: mgr_pass
+      POSTGRES_DB: inma_db
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U recipe_user -d recipe_db"]
+      test: ["CMD-SHELL", "pg_isready -U mgr_user -d inma_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  br-queue:
+  mgr-queue:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
@@ -29,7 +29,7 @@ services:
       timeout: 5s
       retries: 5
 
-  br-web-cache:
+  mgr-web-cache:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
@@ -42,7 +42,7 @@ services:
       timeout: 5s
       retries: 5
 
-  br-web:
+  mgr-web:
     build:
       context: ./web
       dockerfile: Dockerfile
@@ -50,32 +50,32 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://recipe_user:recipe_pass@br-db:5432/recipe_db
-      CACHE_REDIS_URL: redis://br-web-cache:6379
-      QUEUE_REDIS_URL: redis://br-queue:6379
+      DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/inma_db
+      CACHE_REDIS_URL: redis://mgr-web-cache:6379
+      QUEUE_REDIS_URL: redis://mgr-queue:6379
       SERVER_PORT: "3000"
       NODE_ENV: production
     depends_on:
-      br-db:
+      mgr-db:
         condition: service_healthy
-      br-web-cache:
+      mgr-web-cache:
         condition: service_healthy
-      br-queue:
+      mgr-queue:
         condition: service_healthy
 
-  br-nutrition-analyzer:
+  mgr-cost-analyzer:
     build:
-      context: ./nutrition-analyzer
+      context: ./cost-analyzer
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://recipe_user:recipe_pass@br-db:5432/recipe_db
-      QUEUE_REDIS_URL: redis://br-queue:6379
+      DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/inma_db
+      QUEUE_REDIS_URL: redis://mgr-queue:6379
       PORT: "8080"
     depends_on:
-      br-db:
+      mgr-db:
         condition: service_healthy
-      br-queue:
+      mgr-queue:
         condition: service_healthy
 
 volumes:

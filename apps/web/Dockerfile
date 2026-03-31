@@ -60,12 +60,10 @@ ENV FRONTEND_DEV_PORT=5000
 ENV SERVER_PORT=3000
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
-
-
 # Start the application
-CMD echo "🚀 Starting Bestest Recipes web application..." && \
-    echo "🌱 Seeding database..." && \
+CMD echo "Starting Inventory Manager web application..." && \
+    echo "Seeding database..." && \
     node src/db/seed.js && \
-    echo "✅ Database seeded!" && \
-    echo "🚀 Starting server..." && \
+    echo "Database seeded!" && \
+    echo "Starting server..." && \
     node src/index.js

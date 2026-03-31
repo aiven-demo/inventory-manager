@@ -1,7 +1,7 @@
 {
-  "name": "recipe-backend",
+  "name": "inventory-backend",
   "version": "1.0.0",
-  "description": "Recipe API backend",
+  "description": "Inventory Manager API backend",
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",

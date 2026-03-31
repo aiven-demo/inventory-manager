@@ -1,4 +1,4 @@
-module nutrition-analyzer
+module cost-analyzer
 
 go 1.23
 

@@ -2,13 +2,13 @@ const { Router } = require("express");
 
 const CACHE_TTL = 60;
 
-const recipeRoutes = (pool, cache, queue) => {
+const itemRoutes = (pool, cache, queue) => {
   const router = Router();
 
-  async function invalidateRecipeListCache() {
+  async function invalidateItemListCache() {
     if (!cache) return;
     try {
-      const keys = await cache.keys("recipes:search:*");
+      const keys = await cache.keys("items:search:*");
       if (keys.length > 0) await cache.del(...keys);
     } catch (err) {
       console.warn("Cache invalidation failed:", err.message);
@@ -19,7 +19,7 @@ const recipeRoutes = (pool, cache, queue) => {
     try {
       const { search, limit = 20, offset = 0 } = req.query;
 
-      const cacheKey = `recipes:search:${search || ""}:${limit}:${offset}`;
+      const cacheKey = `items:search:${search || ""}:${limit}:${offset}`;
       if (cache) {
         try {
           const cached = await cache.get(cacheKey);
@@ -32,8 +32,8 @@ const recipeRoutes = (pool, cache, queue) => {
       }
 
       let query = `
-        SELECT id, title, description, cooking_time, difficulty, image_url, created_at, liked_at
-        FROM recipes
+        SELECT id, title, description, lead_time, priority, stock_qty, image_url, created_at, pinned_at
+        FROM items
       `;
       const params = [];
 
@@ -59,99 +59,97 @@ const recipeRoutes = (pool, cache, queue) => {
 
       res.json(result.rows);
     } catch (error) {
-      console.error("Error fetching recipes:", error);
-      res.status(500).json({ error: "Failed to fetch recipes" });
+      console.error("Error fetching items:", error);
+      res.status(500).json({ error: "Failed to fetch items" });
     }
   });
 
-  // Get single recipe by ID
   router.get("/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const result = await pool.query("SELECT * FROM recipes WHERE id = $1", [
+      const result = await pool.query("SELECT * FROM items WHERE id = $1", [
         id,
       ]);
 
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Recipe not found" });
+        return res.status(404).json({ error: "Item not found" });
       }
 
       res.json(result.rows[0]);
     } catch (error) {
-      console.error("Error fetching recipe:", error);
-      res.status(500).json({ error: "Failed to fetch recipe" });
+      console.error("Error fetching item:", error);
+      res.status(500).json({ error: "Failed to fetch item" });
     }
   });
 
-  // Like a recipe
-  router.post("/:id/like", async (req, res) => {
+  router.post("/:id/pin", async (req, res) => {
     try {
       const { id } = req.params;
 
       const checkResult = await pool.query(
-        "SELECT id FROM recipes WHERE id = $1",
+        "SELECT id FROM items WHERE id = $1",
         [id]
       );
 
       if (checkResult.rows.length === 0) {
-        return res.status(404).json({ error: "Recipe not found" });
+        return res.status(404).json({ error: "Item not found" });
       }
 
       const query =
-        "UPDATE recipes SET liked_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *";
+        "UPDATE items SET pinned_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *";
       const result = await pool.query(query, [id]);
 
-      await invalidateRecipeListCache();
+      await invalidateItemListCache();
 
       res.json(result.rows[0]);
     } catch (error) {
-      console.error("Error liking recipe:", error);
-      res.status(500).json({ error: "Failed to like recipe" });
+      console.error("Error pinning item:", error);
+      res.status(500).json({ error: "Failed to pin item" });
     }
   });
 
-  router.post("/:id/unlike", async (req, res) => {
+  router.post("/:id/unpin", async (req, res) => {
     try {
       const { id } = req.params;
 
       const checkResult = await pool.query(
-        "SELECT id FROM recipes WHERE id = $1",
+        "SELECT id FROM items WHERE id = $1",
         [id]
       );
 
       if (checkResult.rows.length === 0) {
-        return res.status(404).json({ error: "Recipe not found" });
+        return res.status(404).json({ error: "Item not found" });
       }
 
       const query =
-        "UPDATE recipes SET liked_at = NULL WHERE id = $1 RETURNING *";
+        "UPDATE items SET pinned_at = NULL WHERE id = $1 RETURNING *";
       const result = await pool.query(query, [id]);
 
-      await invalidateRecipeListCache();
+      await invalidateItemListCache();
 
       res.json(result.rows[0]);
     } catch (error) {
-      console.error("Error unliking recipe:", error);
-      res.status(500).json({ error: "Failed to unlike recipe" });
+      console.error("Error unpinning item:", error);
+      res.status(500).json({ error: "Failed to unpin item" });
     }
   });
 
-  router.get("/:id/nutrition", async (req, res) => {
+  router.get("/:id/metrics", async (req, res) => {
     try {
       const { id } = req.params;
       const result = await pool.query(
-        "SELECT recipe_id, calories, protein_g, carbs_g, fat_g, fiber_g, analyzed_at FROM recipe_nutrition WHERE recipe_id = $1",
+        "SELECT item_id, unit_cost, weight_kg, volume_l, ship_cost, handling_h, analyzed_at FROM item_metrics WHERE item_id = $1",
         [id]
       );
 
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Nutrition data not found" });
+        return res.status(404).json({ error: "Cost metrics not found" });
       }
 
       res.json(result.rows[0]);
     } catch (error) {
-      console.error("Error fetching nutrition:", error);
-      res.status(500).json({ error: "Failed to fetch nutrition data" });
+      console.error("Error fetching metrics:", error);
+      res.status(500).json({ error: "Failed to fetch cost metrics" });
     }
   });
 
@@ -159,19 +157,19 @@ const recipeRoutes = (pool, cache, queue) => {
     try {
       const { id } = req.params;
 
-      const check = await pool.query("SELECT id FROM recipes WHERE id = $1", [id]);
+      const check = await pool.query("SELECT id FROM items WHERE id = $1", [id]);
       if (check.rows.length === 0) {
-        return res.status(404).json({ error: "Recipe not found" });
+        return res.status(404).json({ error: "Item not found" });
       }
 
       if (!queue) {
         return res.status(503).json({ error: "Job queue unavailable" });
       }
 
-      const job = JSON.stringify({ recipe_id: parseInt(id), attempt: 1 });
-      await queue.lpush("jobs:nutrition", job);
+      const job = JSON.stringify({ item_id: parseInt(id), attempt: 1 });
+      await queue.lpush("jobs:cost-analysis", job);
 
-      res.json({ status: "queued", recipe_id: parseInt(id) });
+      res.json({ status: "queued", item_id: parseInt(id) });
     } catch (error) {
       console.error("Error enqueuing analysis:", error);
       res.status(500).json({ error: "Failed to enqueue analysis" });
@@ -181,4 +179,4 @@ const recipeRoutes = (pool, cache, queue) => {
   return router;
 };
 
-module.exports = { recipeRoutes };
+module.exports = { itemRoutes };

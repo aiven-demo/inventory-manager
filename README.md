@@ -1,4 +1,4 @@
-# Bestest Recipes
+# Inventory Manager
 
 A multi-service demo application with a Node.js web backend, a React frontend, a PostgreSQL database, a Redis cache, a Redis queue, and a Go-based background job service.
 
@@ -10,31 +10,32 @@ flowchart LR
     Web -- CRUD --> PostgreSQL
     Web -- cache search results --> Cache["Cache (Redis)"]
     Web -- LPUSH job --> Queue["Queue (Redis)"]
-    Queue --> Analyzer["nutrition-analyzer (Go)"]
+    Queue --> Analyzer["cost-analyzer (Go)"]
     Analyzer --> PostgreSQL
 ```
 
-- **Web**: Node.js + Express backend serving a React frontend. Handles recipe CRUD, caches search results in Redis, and enqueues nutrition analysis jobs to Redis.
-- **nutrition-analyzer**: Go worker that polls a Redis list for jobs, analyzes recipe ingredients to estimate nutritional info (calories, protein, carbs, fat, fiber), and writes results to PostgreSQL.
-- **Redis**: Used as a job queue (between web and analyzer) and a cache (for recipe search results).
-- **PostgreSQL**: Primary data store for recipes and nutrition data.
+- **Web**: Node.js + Express backend serving a React frontend. Handles inventory item CRUD, caches search results in Redis, and enqueues cost analysis jobs to Redis.
+- **cost-analyzer**: Go worker that polls a Redis list for jobs, analyzes item components to estimate cost metrics (unit cost, weight, volume, shipping, handling time), and writes results to PostgreSQL.
+- **Redis**: Used as a job queue (between web and analyzer) and a cache (for item search results).
+- **PostgreSQL**: Primary data store for inventory items and cost metrics.
 
 ## Features
 
-- Recipe search and browsing
+- Inventory item search and browsing
+- Dashboard with KPI cards and interactive charts (Recharts)
 - Responsive design with Tailwind CSS
 - Real-time search functionality
-- Detailed recipe pages with ingredients and instructions
-- Like/unlike recipes
-- Nutritional analysis (async, powered by Go worker via Redis queue)
+- Detailed item pages with components and handling procedures
+- Pin/unpin items for quick access
+- Cost analysis (async, powered by Go worker via Redis queue)
 - Search result caching via Redis
 - Docker/Podman support
 
 ## Tech stack
 
 - **Web backend**: Node.js, Express, PostgreSQL, ioredis
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS
-- **Nutrition analyzer**: Go, go-redis, pgx
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Recharts
+- **Cost analyzer**: Go, go-redis, pgx
 - **Database**: PostgreSQL
 - **Cache/Queue**: Redis
 - **Container**: Docker/Podman
@@ -53,7 +54,7 @@ The easiest way to run the application is with Docker Compose or Podman Compose.
 
    ```bash
    git clone <repository-url>
-   cd recipe-app-compose-demo
+   cd inventory-manager
    ```
 
 2. **Start all services**
@@ -75,9 +76,9 @@ The easiest way to run the application is with Docker Compose or Podman Compose.
    - **PostgreSQL** database on port 5432
    - **Redis** on port 6379
    - **Web app** (backend + frontend) on http://localhost:3000
-   - **Nutrition analyzer** (Go worker)
+   - **Cost analyzer** (Go worker)
 
-   The database is automatically seeded with sample recipes on first launch.
+   The database is automatically seeded with sample inventory items on first launch.
 
 3. **View logs**
 
@@ -105,7 +106,7 @@ The easiest way to run the application is with Docker Compose or Podman Compose.
 
 ## Development
 
-All application code lives under `apps/web/` (npm workspace with `backend` and `frontend` packages) and `apps/nutrition-analyzer/` (Go module).
+All application code lives under `apps/web/` (npm workspace with `backend` and `frontend` packages) and `apps/cost-analyzer/` (Go module).
 
 1. **Start the database and Redis**
 
@@ -123,7 +124,7 @@ All application code lives under `apps/web/` (npm workspace with `backend` and `
 3. **Start the development servers**
 
    ```bash
-   DATABASE_URL=postgresql://recipe_user:recipe_pass@localhost:5432/recipe_db CACHE_REDIS_URL=redis://localhost:6379 QUEUE_REDIS_URL=redis://localhost:6380 npm run dev
+   DATABASE_URL=postgresql://inma_user:inma_pass@localhost:5432/inma_db CACHE_REDIS_URL=redis://localhost:6379 QUEUE_REDIS_URL=redis://localhost:6380 npm run dev
    ```
 
    This starts:
@@ -133,16 +134,16 @@ All application code lives under `apps/web/` (npm workspace with `backend` and `
 
    You can also run them individually with `npm run dev:backend` or `npm run dev:frontend`.
 
-4. **Run the nutrition analyzer locally** (requires Go 1.23+)
+4. **Run the cost analyzer locally** (requires Go 1.23+)
 
    ```bash
-   cd apps/nutrition-analyzer
-   DATABASE_URL=postgresql://recipe_user:recipe_pass@localhost:5432/recipe_db QUEUE_REDIS_URL=redis://localhost:6380 go run .
+   cd apps/cost-analyzer
+   DATABASE_URL=postgresql://inma_user:inma_pass@localhost:5432/inma_db QUEUE_REDIS_URL=redis://localhost:6380 go run .
    ```
 
 ### Database seeding
 
-The database is automatically seeded with sample recipes on first launch. To re-seed manually:
+The database is automatically seeded with sample inventory items on first launch. To re-seed manually:
 
 ```bash
 cd apps/web/backend
@@ -152,12 +153,12 @@ npm run db:seed
 ## API endpoints
 
 - `GET /health` - Health check
-- `GET /api/recipes` - Get all recipes (supports `search`, `limit`, `offset` query parameters)
-- `GET /api/recipes/:id` - Get recipe by ID
-- `POST /api/recipes/:id/like` - Like a recipe
-- `POST /api/recipes/:id/unlike` - Unlike a recipe
-- `POST /api/recipes/:id/analyze` - Enqueue nutrition analysis (via queue -> Go worker)
-- `GET /api/recipes/:id/nutrition` - Get nutrition data for a recipe
+- `GET /api/items` - Get all items (supports `search`, `limit`, `offset` query parameters)
+- `GET /api/items/:id` - Get item by ID
+- `POST /api/items/:id/pin` - Pin an item
+- `POST /api/items/:id/unpin` - Unpin an item
+- `POST /api/items/:id/analyze` - Enqueue cost analysis (via queue -> Go worker)
+- `GET /api/items/:id/metrics` - Get cost metrics for an item
 
 ## Environment variables
 
@@ -165,9 +166,9 @@ These are configured automatically when using Docker/Podman Compose. Only set th
 
 | Variable | Description | Default (Compose) |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string (required) | `postgresql://recipe_user:recipe_pass@db:5432/recipe_db` |
-| `CACHE_REDIS_URL` | Redis URL for caching (web only) | `redis://br-web-cache:6379` |
-| `QUEUE_REDIS_URL` | Redis URL for job queue | `redis://br-queue:6379` |
+| `DATABASE_URL` | PostgreSQL connection string (required) | `postgresql://inma_user:inma_pass@inma-db:5432/inma_db` |
+| `CACHE_REDIS_URL` | Redis URL for caching (web only) | `redis://inma-web-cache:6379` |
+| `QUEUE_REDIS_URL` | Redis URL for job queue | `redis://inma-queue:6379` |
 | `SERVER_PORT` | Backend server port | `3000` |
 | `FRONTEND_DEV_PORT` | Frontend dev server port | `5000` |
 | `NODE_ENV` | Environment mode | `production` |
