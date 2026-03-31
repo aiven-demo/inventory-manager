@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Item, CostMetrics } from "../types/item";
+import { Item, EmissionsMetrics } from "../types/item";
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -8,7 +8,7 @@ const ItemDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pinInProgress, setPinInProgress] = useState(false);
-  const [metrics, setMetrics] = useState<CostMetrics | null>(null);
+  const [metrics, setMetrics] = useState<EmissionsMetrics | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -267,15 +267,15 @@ const ItemDetail = () => {
           {metrics ? (
             <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Cost Analysis per Unit
+                Emissions per Unit
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-800">
                   <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    ${metrics.unit_cost}
+                    {metrics.unit_co2} kg
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Unit Cost
+                    CO₂
                   </div>
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -296,7 +296,7 @@ const ItemDetail = () => {
                 </div>
                 <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-lg border border-blue-100 dark:border-blue-800">
                   <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                    ${metrics.ship_cost}
+                    {metrics.transport_co2} kg
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Shipping
@@ -329,14 +329,14 @@ const ItemDetail = () => {
                 {analyzing ? (
                   <span className="inline-flex items-center gap-2">
                     <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
-                    Running cost analysis...
+                    Running emissions analysis...
                   </span>
                 ) : (
-                  "Run Cost Analysis"
+                  "Run Emissions Analysis"
                 )}
               </button>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Estimate unit cost, weight, and logistics metrics from components
+                Estimate CO₂ emissions, weight, and logistics metrics from components
               </p>
             </div>
           )}

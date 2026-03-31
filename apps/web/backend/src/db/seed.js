@@ -10,6 +10,7 @@ const pool = new Pool({
 const createTables = async () => {
   const client = await pool.connect();
   try {
+    await client.query(`DROP TABLE IF EXISTS item_metrics CASCADE`);
     await client.query(`DROP TABLE IF EXISTS items CASCADE`);
 
     await client.query(`
@@ -25,6 +26,18 @@ const createTables = async () => {
         image_url VARCHAR(500),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         pinned_at TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE item_metrics (
+        item_id INTEGER PRIMARY KEY REFERENCES items(id),
+        unit_co2 INTEGER NOT NULL,
+        weight_kg NUMERIC(6,1) NOT NULL,
+        volume_l NUMERIC(6,1) NOT NULL,
+        transport_co2 NUMERIC(6,1) NOT NULL,
+        handling_h NUMERIC(6,1) NOT NULL,
+        analyzed_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
     console.log("Tables created successfully");

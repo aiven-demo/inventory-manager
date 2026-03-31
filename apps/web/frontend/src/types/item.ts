@@ -24,12 +24,12 @@ export interface ItemSummary {
   pinned_at: string | null;
 }
 
-export interface CostMetrics {
+export interface EmissionsMetrics {
   item_id: number;
-  unit_cost: number;
+  unit_co2: number;
   weight_kg: number;
   volume_l: number;
-  ship_cost: number;
+  transport_co2: number;
   handling_h: number;
   analyzed_at: string;
 }

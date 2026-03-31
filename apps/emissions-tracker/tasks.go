@@ -14,30 +14,30 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type CostAnalysisJob struct {
+type EmissionsJob struct {
 	ItemID  int `json:"item_id"`
 	Attempt int `json:"attempt"`
 }
 
-type CostAnalysisResult struct {
-	ItemID     int     `json:"item_id"`
-	UnitCost   int     `json:"unit_cost"`
-	WeightKg   float64 `json:"weight_kg"`
-	VolumeL    float64 `json:"volume_l"`
-	ShipCost   float64 `json:"ship_cost"`
-	HandlingH  float64 `json:"handling_h"`
-	AnalyzedAt string  `json:"analyzed_at"`
+type EmissionsResult struct {
+	ItemID      int     `json:"item_id"`
+	UnitCO2     int     `json:"unit_co2"`
+	WeightKg    float64 `json:"weight_kg"`
+	VolumeL     float64 `json:"volume_l"`
+	TransportCO2 float64 `json:"transport_co2"`
+	HandlingH   float64 `json:"handling_h"`
+	AnalyzedAt  string  `json:"analyzed_at"`
 }
 
-type componentCostInfo struct {
-	unitCost  float64
-	weightKg  float64
-	volumeL   float64
-	shipCost  float64
-	handlingH float64
+type componentEmissionsInfo struct {
+	unitCO2      float64
+	weightKg     float64
+	volumeL      float64
+	transportCO2 float64
+	handlingH    float64
 }
 
-var costDB = map[string]componentCostInfo{
+var emissionsDB = map[string]componentEmissionsInfo{
 	"motor":        {8.0, 1.0, 3.0, 2.5, 0.5},
 	"bearing":      {3.0, 1.0, 0.5, 0.8, 0.2},
 	"encoder":      {12.0, 0.5, 1.0, 1.5, 0.3},
@@ -99,7 +99,7 @@ var costDB = map[string]componentCostInfo{
 
 var amountRegex = regexp.MustCompile(`(\d+)\s*(g|kg|ml|l|oz)\b`)
 
-func processCostAnalysisJob(ctx context.Context, db *pgxpool.Pool, job *CostAnalysisJob) error {
+func processEmissionsJob(ctx context.Context, db *pgxpool.Pool, job *EmissionsJob) error {
 	var components []string
 	var batchSize int
 	err := db.QueryRow(ctx,
@@ -119,22 +119,22 @@ func processCostAnalysisJob(ctx context.Context, db *pgxpool.Pool, job *CostAnal
 	result := analyzeComponents(job.ItemID, components, batchSize)
 
 	_, err = db.Exec(ctx, `
-		INSERT INTO item_metrics (item_id, unit_cost, weight_kg, volume_l, ship_cost, handling_h, analyzed_at)
+		INSERT INTO item_metrics (item_id, unit_co2, weight_kg, volume_l, transport_co2, handling_h, analyzed_at)
 		VALUES ($1, $2, $3, $4, $5, $6, NOW())
 		ON CONFLICT (item_id)
-		DO UPDATE SET unit_cost = $2, weight_kg = $3, volume_l = $4, ship_cost = $5, handling_h = $6, analyzed_at = NOW()
-	`, result.ItemID, result.UnitCost, result.WeightKg, result.VolumeL, result.ShipCost, result.HandlingH)
+		DO UPDATE SET unit_co2 = $2, weight_kg = $3, volume_l = $4, transport_co2 = $5, handling_h = $6, analyzed_at = NOW()
+	`, result.ItemID, result.UnitCO2, result.WeightKg, result.VolumeL, result.TransportCO2, result.HandlingH)
 	if err != nil {
-		return fmt.Errorf("failed to save cost metrics: %w", err)
+		return fmt.Errorf("failed to save emissions metrics: %w", err)
 	}
 
-	log.Printf("Item %d: $%d cost, %.1fkg weight, %.1fL volume, $%.1f shipping per unit",
-		result.ItemID, result.UnitCost, result.WeightKg, result.VolumeL, result.ShipCost)
+	log.Printf("Item %d: %d kg CO2, %.1fkg weight, %.1fL volume, %.1f kg transport CO2 per unit",
+		result.ItemID, result.UnitCO2, result.WeightKg, result.VolumeL, result.TransportCO2)
 	return nil
 }
 
-func analyzeComponents(itemID int, components []string, batchSize int) CostAnalysisResult {
-	var totalCost, totalWeight, totalVolume, totalShip, totalHandling float64
+func analyzeComponents(itemID int, components []string, batchSize int) EmissionsResult {
+	var totalCO2, totalWeight, totalVolume, totalTransport, totalHandling float64
 
 	for _, comp := range components {
 		lower := strings.ToLower(comp)
@@ -152,13 +152,13 @@ func analyzeComponents(itemID int, components []string, batchSize int) CostAnaly
 			}
 		}
 
-		for keyword, info := range costDB {
+		for keyword, info := range emissionsDB {
 			if strings.Contains(lower, keyword) {
 				factor := amount / 100.0
-				totalCost += info.unitCost * factor
+				totalCO2 += info.unitCO2 * factor
 				totalWeight += info.weightKg * factor
 				totalVolume += info.volumeL * factor
-				totalShip += info.shipCost * factor
+				totalTransport += info.transportCO2 * factor
 				totalHandling += info.handlingH * factor
 				break
 			}
@@ -168,13 +168,13 @@ func analyzeComponents(itemID int, components []string, batchSize int) CostAnaly
 	jitter := 0.95 + rand.Float64()*0.1
 	s := float64(batchSize)
 
-	return CostAnalysisResult{
-		ItemID:    itemID,
-		UnitCost:  int(math.Round(totalCost * jitter / s)),
-		WeightKg:  math.Round(totalWeight*jitter/s*10) / 10,
-		VolumeL:   math.Round(totalVolume*jitter/s*10) / 10,
-		ShipCost:  math.Round(totalShip*jitter/s*10) / 10,
-		HandlingH: math.Round(totalHandling*jitter/s*10) / 10,
+	return EmissionsResult{
+		ItemID:       itemID,
+		UnitCO2:      int(math.Round(totalCO2 * jitter / s)),
+		WeightKg:     math.Round(totalWeight*jitter/s*10) / 10,
+		VolumeL:      math.Round(totalVolume*jitter/s*10) / 10,
+		TransportCO2: math.Round(totalTransport*jitter/s*10) / 10,
+		HandlingH:    math.Round(totalHandling*jitter/s*10) / 10,
 	}
 }
 
@@ -212,10 +212,10 @@ func ensureSchema(ctx context.Context, db *pgxpool.Pool) error {
 	_, err := db.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS item_metrics (
 			item_id INTEGER PRIMARY KEY REFERENCES items(id),
-			unit_cost INTEGER NOT NULL,
+			unit_co2 INTEGER NOT NULL,
 			weight_kg NUMERIC(6,1) NOT NULL,
 			volume_l NUMERIC(6,1) NOT NULL,
-			ship_cost NUMERIC(6,1) NOT NULL,
+			transport_co2 NUMERIC(6,1) NOT NULL,
 			handling_h NUMERIC(6,1) NOT NULL,
 			analyzed_at TIMESTAMP NOT NULL DEFAULT NOW()
 		)

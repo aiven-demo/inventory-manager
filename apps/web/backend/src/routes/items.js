@@ -138,18 +138,18 @@ const itemRoutes = (pool, cache, queue) => {
     try {
       const { id } = req.params;
       const result = await pool.query(
-        "SELECT item_id, unit_cost, weight_kg, volume_l, ship_cost, handling_h, analyzed_at FROM item_metrics WHERE item_id = $1",
+        "SELECT item_id, unit_co2, weight_kg, volume_l, transport_co2, handling_h, analyzed_at FROM item_metrics WHERE item_id = $1",
         [id]
       );
 
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Cost metrics not found" });
+        return res.status(404).json({ error: "Emissions metrics not found" });
       }
 
       res.json(result.rows[0]);
     } catch (error) {
       console.error("Error fetching metrics:", error);
-      res.status(500).json({ error: "Failed to fetch cost metrics" });
+      res.status(500).json({ error: "Failed to fetch emissions metrics" });
     }
   });
 
@@ -167,7 +167,7 @@ const itemRoutes = (pool, cache, queue) => {
       }
 
       const job = JSON.stringify({ item_id: parseInt(id), attempt: 1 });
-      await queue.lpush("jobs:cost-analysis", job);
+      await queue.lpush("jobs:emissions-analysis", job);
 
       res.json({ status: "queued", item_id: parseInt(id) });
     } catch (error) {

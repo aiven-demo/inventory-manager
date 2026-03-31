@@ -1,4 +1,4 @@
-module cost-analyzer
+module emissions-tracker
 
 go 1.23
 

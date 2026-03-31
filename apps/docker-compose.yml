@@ -5,13 +5,13 @@ services:
     environment:
       POSTGRES_USER: mgr_user
       POSTGRES_PASSWORD: mgr_pass
-      POSTGRES_DB: inma_db
+      POSTGRES_DB: mgr_db
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mgr_user -d inma_db"]
+      test: ["CMD-SHELL", "pg_isready -U mgr_user -d mgr_db -h localhost"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -50,7 +50,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/inma_db
+      DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/mgr_db
       CACHE_REDIS_URL: redis://mgr-web-cache:6379
       QUEUE_REDIS_URL: redis://mgr-queue:6379
       SERVER_PORT: "3000"
@@ -63,13 +63,13 @@ services:
       mgr-queue:
         condition: service_healthy
 
-  mgr-cost-analyzer:
+  mgr-emissions-tracker:
     build:
-      context: ./cost-analyzer
+      context: ./emissions-tracker
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/inma_db
+      DATABASE_URL: postgresql://mgr_user:mgr_pass@mgr-db:5432/mgr_db
       QUEUE_REDIS_URL: redis://mgr-queue:6379
       PORT: "8080"
     depends_on:

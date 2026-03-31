@@ -83,7 +83,7 @@ func main() {
 }
 
 func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
-	log.Println("Worker loop started, waiting for jobs on 'jobs:cost-analysis'")
+	log.Println("Worker loop started, waiting for jobs on 'jobs:emissions-analysis'")
 	for {
 		select {
 		case <-ctx.Done():
@@ -92,7 +92,7 @@ func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
 		default:
 		}
 
-		result, err := rdb.BRPop(ctx, 5*time.Second, "jobs:cost-analysis").Result()
+		result, err := rdb.BRPop(ctx, 5*time.Second, "jobs:emissions-analysis").Result()
 		if err != nil {
 			if err == redis.Nil || strings.Contains(err.Error(), "context canceled") {
 				continue
@@ -103,21 +103,21 @@ func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
 		}
 
 		payload := result[1]
-		var job CostAnalysisJob
+		var job EmissionsJob
 		if err := json.Unmarshal([]byte(payload), &job); err != nil {
 			log.Printf("Failed to unmarshal job: %v", err)
 			continue
 		}
 
-		log.Printf("Processing cost analysis for item %d (attempt %d)", job.ItemID, job.Attempt)
+		log.Printf("Processing emissions analysis for item %d (attempt %d)", job.ItemID, job.Attempt)
 
-		if err := processCostAnalysisJob(ctx, db, &job); err != nil {
+		if err := processEmissionsJob(ctx, db, &job); err != nil {
 			log.Printf("Job failed for item %d: %v", job.ItemID, err)
 
 			if job.Attempt < 3 {
 				job.Attempt++
 				retryPayload, _ := json.Marshal(job)
-				rdb.LPush(ctx, "jobs:cost-analysis", retryPayload)
+				rdb.LPush(ctx, "jobs:emissions-analysis", retryPayload)
 				log.Printf("Requeued item %d (attempt %d)", job.ItemID, job.Attempt)
 			} else {
 				log.Printf("Job permanently failed for item %d after %d attempts", job.ItemID, job.Attempt)
@@ -125,7 +125,7 @@ func workerLoop(ctx context.Context, rdb *redis.Client, db *pgxpool.Pool) {
 			continue
 		}
 
-		log.Printf("Cost analysis complete for item %d", job.ItemID)
+		log.Printf("Emissions analysis complete for item %d", job.ItemID)
 	}
 }
 

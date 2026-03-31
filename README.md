@@ -10,12 +10,12 @@ flowchart LR
     Web -- CRUD --> PostgreSQL
     Web -- cache search results --> Cache["Cache (Redis)"]
     Web -- LPUSH job --> Queue["Queue (Redis)"]
-    Queue --> Analyzer["cost-analyzer (Go)"]
+    Queue --> Analyzer["emissions-tracker (Go)"]
     Analyzer --> PostgreSQL
 ```
 
 - **Web**: Node.js + Express backend serving a React frontend. Handles inventory item CRUD, caches search results in Redis, and enqueues cost analysis jobs to Redis.
-- **cost-analyzer**: Go worker that polls a Redis list for jobs, analyzes item components to estimate cost metrics (unit cost, weight, volume, shipping, handling time), and writes results to PostgreSQL.
+- **emissions-tracker**: Go worker that polls a Redis list for jobs, analyzes item components to estimate cost metrics (unit cost, weight, volume, shipping, handling time), and writes results to PostgreSQL.
 - **Redis**: Used as a job queue (between web and analyzer) and a cache (for item search results).
 - **PostgreSQL**: Primary data store for inventory items and cost metrics.
 
@@ -106,7 +106,7 @@ The easiest way to run the application is with Docker Compose or Podman Compose.
 
 ## Development
 
-All application code lives under `apps/web/` (npm workspace with `backend` and `frontend` packages) and `apps/cost-analyzer/` (Go module).
+All application code lives under `apps/web/` (npm workspace with `backend` and `frontend` packages) and `apps/emissions-tracker/` (Go module).
 
 1. **Start the database and Redis**
 
@@ -124,7 +124,7 @@ All application code lives under `apps/web/` (npm workspace with `backend` and `
 3. **Start the development servers**
 
    ```bash
-   DATABASE_URL=postgresql://inma_user:inma_pass@localhost:5432/inma_db CACHE_REDIS_URL=redis://localhost:6379 QUEUE_REDIS_URL=redis://localhost:6380 npm run dev
+   DATABASE_URL=postgresql://mgr_user:mgr_pass@localhost:5432/mgr_db CACHE_REDIS_URL=redis://localhost:6379 QUEUE_REDIS_URL=redis://localhost:6380 npm run dev
    ```
 
    This starts:
@@ -137,8 +137,8 @@ All application code lives under `apps/web/` (npm workspace with `backend` and `
 4. **Run the cost analyzer locally** (requires Go 1.23+)
 
    ```bash
-   cd apps/cost-analyzer
-   DATABASE_URL=postgresql://inma_user:inma_pass@localhost:5432/inma_db QUEUE_REDIS_URL=redis://localhost:6380 go run .
+   cd apps/emissions-tracker
+   DATABASE_URL=postgresql://mgr_user:mgr_pass@localhost:5432/mgr_db QUEUE_REDIS_URL=redis://localhost:6380 go run .
    ```
 
 ### Database seeding
@@ -166,9 +166,9 @@ These are configured automatically when using Docker/Podman Compose. Only set th
 
 | Variable | Description | Default (Compose) |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL connection string (required) | `postgresql://inma_user:inma_pass@inma-db:5432/inma_db` |
-| `CACHE_REDIS_URL` | Redis URL for caching (web only) | `redis://inma-web-cache:6379` |
-| `QUEUE_REDIS_URL` | Redis URL for job queue | `redis://inma-queue:6379` |
+| `DATABASE_URL` | PostgreSQL connection string (required) | `postgresql://mgr_user:mgr_pass@mgr-db:5432/mgr_db` |
+| `CACHE_REDIS_URL` | Redis URL for caching (web only) | `redis://mgr-web-cache:6379` |
+| `QUEUE_REDIS_URL` | Redis URL for job queue | `redis://mgr-queue:6379` |
 | `SERVER_PORT` | Backend server port | `3000` |
 | `FRONTEND_DEV_PORT` | Frontend dev server port | `5000` |
 | `NODE_ENV` | Environment mode | `production` |
